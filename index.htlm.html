@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NPS Annuity Comparison Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ───────────────────────────────────────────────── */
+:root{
+  --n950:#040e1e; --n900:#0b1e37; --n800:#0f2d54; --n750:#133568;
+  --n700:#17407e; --n600:#1d5496; --n500:#2463ae; --n400:#3d7cc9;
+  --n300:#6fa0dd; --n200:#a9caf0; --n100:#d6e9f8; --n50:#eef6fc;
+  --g900:#111827; --g800:#1f2937; --g700:#374151; --g600:#4b5563;
+  --g500:#6b7280; --g400:#9ca3af; --g300:#d1d5db; --g200:#e5e8ee;
+  --g100:#f2f4f7; --g50:#f8fafc;
+  --white:#ffffff;
+  --bg:var(--g100); --surface:var(--white); --border:var(--g200);
+  --text:var(--g900); --text-mid:var(--g600); --text-muted:var(--g400);
+  --sh-sm:0 1px 4px rgba(0,0,0,.06); --sh:0 4px 20px rgba(0,0,0,.08);
+  --sh-lg:0 10px 40px rgba(0,0,0,.12);
+  --r:14px; --r-sm:8px; --r-lg:20px;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideR{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes barGrow{from{width:0}}
+@keyframes gaugeFill{from{width:0}}
+@keyframes donutSpin{from{stroke-dashoffset:400}to{stroke-dashoffset:var(--target)}}
+@keyframes countPop{from{opacity:.5;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes pulseRing{0%,100%{box-shadow:0 0 0 0 rgba(36,99,174,.3)}50%{box-shadow:0 0 0 6px rgba(36,99,174,0)}}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.hdr{
+  background:linear-gradient(130deg,var(--n900) 0%,var(--n800) 50%,var(--n750) 100%);
+  position:relative;overflow:hidden;
+  animation:fadeIn .5s ease;
+}
+/* geometric grid overlay */
+.hdr::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+/* radial glow */
+.hdr::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 75% 50%,rgba(36,99,174,.25) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hdr-inner{
+  position:relative;z-index:1;
+  max-width:1220px;margin:0 auto;
+  padding:30px 32px 26px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+}
+.hdr-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.68rem;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;
+  color:rgba(255,255,255,.55);margin-bottom:8px;
+}
+.hdr-dot{width:5px;height:5px;border-radius:50%;background:var(--n300);}
+.hdr h1{font-size:1.75rem;font-weight:800;color:#fff;letter-spacing:-.4px;line-height:1.15;}
+.hdr h1 em{font-style:normal;color:var(--n300);}
+.hdr-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:5px;}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+.btn-pdf{
+  background:var(--white);color:var(--n800);
+  border:none;border-radius:var(--r-sm);
+  padding:10px 22px;font-size:.82rem;font-weight:700;letter-spacing:.2px;
+  cursor:pointer;display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  transition:all .22s;font-family:'Inter',sans-serif;
+}
+.btn-pdf:hover{background:var(--n50);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.22);}
+.btn-pdf svg{opacity:.7;}
+.live-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.68rem;font-weight:500;color:rgba(255,255,255,.45);
+}
+.live-tag span{width:6px;height:6px;border-radius:50%;background:var(--n300);animation:pulseRing 2.2s infinite;}
+
+/* ── Stat Strip ─────────────────────────────────────────────── */
+.stat-strip{
+  background:var(--n800);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.stat-strip-inner{
+  max-width:1220px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  animation:fadeIn .6s .1s ease both;
+}
+.stat-item{
+  padding:14px 24px;
+  border-right:1px solid rgba(255,255,255,.07);
+  transition:background .2s;
+}
+.stat-item:last-child{border-right:none;}
+.stat-item:hover{background:rgba(255,255,255,.04);}
+.stat-lbl{font-size:.65rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;}
+.stat-val{font-size:.98rem;font-weight:700;color:#fff;letter-spacing:-.2px;transition:all .25s;}
+.stat-val.flash{animation:countPop .28s ease;}
+@media(max-width:640px){.stat-strip-inner{grid-template-columns:1fr 1fr;}.stat-item{border-bottom:1px solid rgba(255,255,255,.07);}}
+
+/* ── Main ────────────────────────────────────────────────────── */
+.main{max-width:1220px;margin:0 auto;padding:30px 20px 80px;}
+
+/* Section */
+.sec{margin-bottom:32px;}
+.sec-title{
+  font-size:.7rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--n700);display:flex;align-items:center;gap:10px;margin-bottom:18px;
+}
+.sec-title::before{content:'';width:3px;height:16px;border-radius:2px;background:linear-gradient(var(--n600),var(--n400));display:block;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);transition:box-shadow .22s;}
+.card:hover{box-shadow:var(--sh-lg);}
+
+/* ── Controls ────────────────────────────────────────────────── */
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.ctrl-grid .full{grid-column:1/-1;}
+@media(max-width:720px){.ctrl-grid{grid-template-columns:1fr;}}
+
+.ctrl-card{padding:24px 26px;animation:fadeUp .45s ease both;}
+.ctrl-card:nth-child(1){animation-delay:.05s;}
+.ctrl-card:nth-child(2){animation-delay:.1s;}
+.ctrl-card:nth-child(3){animation-delay:.15s;}
+.ctrl-lbl{font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;}
+.corpus-amt{font-size:2.2rem;font-weight:800;color:var(--n800);letter-spacing:-1px;line-height:1;margin-bottom:3px;transition:all .2s;}
+.corpus-amt.pop{animation:countPop .25s ease;}
+.corpus-sub{font-size:.76rem;color:var(--text-muted);margin-bottom:16px;}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:5px;
+  background:linear-gradient(to right,var(--n600) 0%,var(--n600) var(--pct,32%),var(--g200) var(--pct,32%),var(--g200) 100%);
+  border-radius:3px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--white);border:3px solid var(--n600);
+  box-shadow:0 2px 8px rgba(36,99,174,.3);transition:transform .15s,box-shadow .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);box-shadow:0 3px 12px rgba(36,99,174,.45);}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--n600);box-shadow:0 2px 8px rgba(36,99,174,.3);cursor:pointer;}
+.slider-ticks{display:flex;justify-content:space-between;margin-top:9px;font-size:.67rem;color:var(--text-muted);}
+
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{
+  padding:8px 16px;border-radius:40px;border:1.5px solid var(--border);
+  background:var(--white);color:var(--text-mid);font-size:.8rem;font-weight:500;
+  cursor:pointer;transition:all .2s cubic-bezier(.4,0,.2,1);font-family:'Inter',sans-serif;line-height:1.3;text-align:left;
+}
+.pill:hover{border-color:var(--n500);color:var(--n700);background:var(--n50);}
+.pill.active{background:var(--n800);border-color:var(--n800);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(15,45,84,.28);transform:translateY(-1px);}
+.pill-sub{font-size:.67rem;display:block;opacity:.65;margin-top:1px;}
+
+/* ── Analysis Row ───────────────────────────────────────────── */
+.analysis-row{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
+@media(max-width:860px){.analysis-row{grid-template-columns:1fr;}}
+
+/* Donut Card */
+.donut-card{padding:24px;animation:fadeUp .45s .1s ease both;}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;}
+.donut-svg-wrap{position:relative;width:160px;height:160px;}
+.donut-svg{width:160px;height:160px;transform:rotate(-90deg);}
+.donut-track{fill:none;stroke:var(--g200);stroke-width:14;}
+.donut-annuity{fill:none;stroke:var(--n700);stroke-width:14;stroke-linecap:butt;transition:stroke-dasharray .65s cubic-bezier(.4,0,.2,1);}
+.donut-lump   {fill:none;stroke:var(--g300);stroke-width:14;stroke-linecap:butt;transition:stroke-dasharray .65s cubic-bezier(.4,0,.2,1),stroke-dashoffset .65s cubic-bezier(.4,0,.2,1);}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;line-height:1.2;}
+.donut-center-pct{font-size:1.5rem;font-weight:800;color:var(--n800);display:block;}
+.donut-center-lbl{font-size:.68rem;font-weight:500;color:var(--text-muted);}
+.donut-legend{width:100%;}
+.legend-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.legend-row:last-child{border-bottom:none;}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.legend-dot.navy{background:var(--n700);}
+.legend-dot.grey{background:var(--g300);}
+.legend-label{font-size:.78rem;color:var(--text-mid);flex:1;}
+.legend-val{font-size:.82rem;font-weight:700;color:var(--text);}
+.legend-pct{font-size:.7rem;color:var(--text-muted);margin-left:4px;}
+
+/* Summary Cards Grid */
+.cards-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+  animation:fadeUp .45s .15s ease both;
+}
+@media(max-width:540px){.cards-grid{grid-template-columns:1fr;}}
+
+.sc{padding:20px 22px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--n600),var(--n400));}
+.sc.accent2::before{background:linear-gradient(90deg,var(--g500),var(--g300));}
+.sc.accent3::before{background:linear-gradient(90deg,var(--n800),var(--n600));}
+.sc.accent4::before{background:linear-gradient(90deg,var(--n400),var(--n200));}
+.sc-bg{position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;background:var(--g50);pointer-events:none;}
+.sc-icon{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;margin-bottom:12px;
+  background:var(--n50);border:1px solid var(--n100);
+}
+.sc-icon.grey{background:var(--g100);border-color:var(--g200);}
+.sc-lbl{font-size:.67rem;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
+.sc-val{font-size:1.38rem;font-weight:800;color:var(--n800);letter-spacing:-.4px;line-height:1.1;transition:all .22s;}
+.sc-val.flash{animation:countPop .3s ease;}
+.sc-val.highlight{color:var(--n600);}
+.sc-sub{font-size:.72rem;color:var(--text-muted);margin-top:5px;line-height:1.4;}
+
+/* ── Adequacy Gauge ─────────────────────────────────────────── */
+.gauge-card{padding:26px 28px;animation:fadeUp .45s .2s ease both;}
+.gauge-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
+.gauge-title{font-size:.88rem;font-weight:700;color:var(--text);}
+.gauge-cur{
+  font-size:.82rem;font-weight:700;color:var(--n700);
+  background:var(--n50);border:1px solid var(--n100);
+  border-radius:6px;padding:4px 12px;
+  transition:all .25s;
+}
+.gauge-cur.flash{animation:countPop .3s ease;}
+.gauge-track{
+  height:10px;background:var(--g100);border-radius:6px;
+  position:relative;overflow:visible;margin-bottom:10px;
+}
+.gauge-fill{
+  height:100%;border-radius:6px;
+  background:linear-gradient(to right,var(--n700),var(--n500),var(--n300));
+  transition:width .7s cubic-bezier(.4,0,.2,1);
+  position:relative;min-width:4px;
+}
+.gauge-fill::after{
+  content:'';
+  position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+  width:4px;height:18px;background:var(--n800);border-radius:2px;
+}
+.gauge-marks{display:flex;justify-content:space-between;position:relative;padding-top:8px;}
+.gauge-mark{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  position:absolute;transform:translateX(-50%);
+}
+.gauge-mark-tick{width:1px;height:6px;background:var(--g300);margin-bottom:2px;}
+.gauge-mark-lbl{font-size:.65rem;color:var(--text-muted);white-space:nowrap;}
+.gauge-mark-tag{
+  font-size:.6rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--text-muted);background:var(--g100);border:1px solid var(--border);
+  border-radius:3px;padding:1px 5px;margin-top:1px;white-space:nowrap;
+}
+.gauge-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;}
+.gl-item{display:flex;align-items:center;gap:6px;font-size:.73rem;color:var(--text-mid);}
+.gl-dot{width:8px;height:8px;border-radius:2px;}
+
+/* ── Insights Strip ─────────────────────────────────────────── */
+.insights-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;
+  animation:fadeUp .45s .25s ease both;
+}
+@media(max-width:640px){.insights-strip{grid-template-columns:1fr;}}
+
+.insight{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh-sm);
+  transition:box-shadow .22s;
+}
+.insight:hover{box-shadow:var(--sh);}
+.insight-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--n50);border:1px solid var(--n100);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.insight-body{}
+.insight-lbl{font-size:.67rem;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text-muted);margin-bottom:3px;}
+.insight-val{font-size:1.18rem;font-weight:800;color:var(--n800);letter-spacing:-.3px;transition:all .22s;}
+.insight-val.flash{animation:countPop .3s ease;}
+.insight-sub{font-size:.71rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── ASP Table ──────────────────────────────────────────────── */
+.tbl-outer{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);
+  animation:fadeUp .45s .3s ease both;
+}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:linear-gradient(to right,var(--n900),var(--n800));}
+th{color:rgba(255,255,255,.78);font-size:.67rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:14px 18px;text-align:left;white-space:nowrap;}
+th:first-child{width:54px;text-align:center;}
+td{padding:14px 18px;font-size:.87rem;border-bottom:1px solid var(--g100);vertical-align:middle;transition:background .15s;}
+tr:last-child td{border-bottom:none;}
+tbody tr{animation:slideR .3s ease both;transition:background .15s;}
+tbody tr:hover td{background:#f5f8ff;}
+tbody tr.r1{background:linear-gradient(to right,var(--n50),var(--white));}
+tbody tr.r1 td{border-bottom-color:var(--n100);}
+tbody tr.r1:hover td{background:var(--n50);}
+
+.rank-b{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.76rem;font-weight:800;margin:0 auto;
+  border:2px solid var(--border);background:var(--g100);color:var(--g500);
+  transition:transform .2s;
+}
+tr:hover .rank-b{transform:scale(1.1);}
+.rank-b.g1{background:var(--n800);color:#fff;border-color:var(--n700);box-shadow:0 2px 8px rgba(15,45,84,.3);}
+.rank-b.g2{background:var(--g500);color:#fff;border-color:var(--g400);}
+.rank-b.g3{background:var(--g300);color:var(--g700);border-color:var(--g300);}
+
+.asp-name{font-weight:700;color:var(--n800);font-size:.9rem;}
+.asp-full{font-size:.7rem;color:var(--text-muted);margin-top:2px;}
+
+.rate-chip{
+  display:inline-flex;align-items:center;
+  background:var(--n50);border:1px solid var(--n100);
+  border-radius:6px;padding:3px 10px;
+  font-size:.83rem;font-weight:700;color:var(--n700);
+  font-family:'Inter',sans-serif;
+}
+.rate-bar-row{margin-top:5px;height:3px;background:var(--g100);border-radius:2px;overflow:hidden;}
+.rate-bar{height:100%;background:linear-gradient(to right,var(--n700),var(--n400));border-radius:2px;animation:barGrow .6s ease both;}
+
+.pen-val{font-weight:800;font-size:.93rem;color:var(--n800);}
+.pen-sub{font-size:.72rem;color:var(--text-muted);margin-top:2px;}
+
+.note-chip{
+  font-size:.7rem;background:var(--g50);color:var(--text-mid);
+  border:1px solid var(--border);border-radius:5px;
+  padding:3px 8px;display:inline-block;line-height:1.4;
+}
+
+.top-tag{
+  font-size:.62rem;font-weight:700;background:var(--n800);color:#fff;
+  border-radius:4px;padding:2px 6px;margin-left:7px;vertical-align:middle;
+  letter-spacing:.4px;animation:pop .25s ease;
+}
+
+.tbl-foot{padding:12px 18px;background:var(--g50);border-top:1px solid var(--border);}
+.tbl-foot p{font-size:.7rem;color:var(--text-muted);line-height:1.6;}
+.tbl-foot span{color:var(--n500);}
+
+/* ── Explainer Table ────────────────────────────────────────── */
+.expl-outer{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--sh);animation:fadeUp .45s .35s ease both;
+}
+.expl-outer thead tr{background:linear-gradient(to right,#1a2e50,#243d6a);}
+.expl-outer td{font-size:.83rem;}
+.plan-nm{font-weight:700;color:var(--n800);}
+.chk{color:var(--n600);font-weight:700;font-size:1.05rem;}
+.crs{color:var(--g300);font-size:1.05rem;}
+td.ctr,th.ctr{text-align:center;}
+.best-use-lbl{font-size:.77rem;color:var(--text-mid);}
+.payout-badge{
+  display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.3px;
+  padding:2px 8px;border-radius:4px;
+}
+.payout-badge.high{background:var(--n50);color:var(--n700);border:1px solid var(--n100);}
+.payout-badge.med {background:var(--g100);color:var(--g600);border:1px solid var(--g200);}
+.payout-badge.low {background:var(--g50);color:var(--g500);border:1px solid var(--g200);}
+
+/* ── Disclaimer ─────────────────────────────────────────────── */
+.disc{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--n600);
+  border-radius:var(--r);padding:22px 26px;
+  font-size:.75rem;color:var(--text-mid);line-height:1.8;
+  box-shadow:var(--sh-sm);animation:fadeUp .45s .4s ease both;
+}
+.disc-head{
+  font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--n600);display:flex;align-items:center;gap:8px;margin-bottom:12px;
+}
+.disc strong{color:var(--text);font-weight:600;}
+.disc p+p{margin-top:8px;}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.div{height:1px;background:var(--border);margin:4px 0 26px;}
+
+/* ── Print ──────────────────────────────────────────────────── */
+@media print{
+  .no-print{display:none!important;}
+  body{background:#fff;font-size:11px;}
+  .hdr,.stat-strip{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  @page{margin:1.5cm;}
+  .card,.tbl-outer,.expl-outer{box-shadow:none;page-break-inside:avoid;}
+  tbody tr{animation:none!important;}
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media(max-width:600px){
+  .hdr-inner{padding:20px 16px;}
+  .hdr h1{font-size:1.3rem;}
+  .main{padding:18px 12px 50px;}
+  .ctrl-card{padding:16px 18px;}
+  th,td{padding:10px 12px;font-size:.8rem;}
+  .corpus-amt{font-size:1.7rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────── -->
+<header class="hdr no-print">
+  <div class="hdr-inner">
+    <div>
+      <div class="hdr-kicker">
+        <span class="hdr-dot"></span>
+        PFRDA-Empanelled ASPs &nbsp;·&nbsp; Wealth Advisory Tool
+      </div>
+      <h1>NPS Annuity <em>Comparison</em> Tool</h1>
+      <p class="hdr-sub">7 registered annuity service providers &nbsp;·&nbsp; Real-time pension estimates &nbsp;·&nbsp; May 2025 rates</p>
+    </div>
+    <div class="hdr-right">
+      <button class="btn-pdf no-print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Export to PDF
+      </button>
+      <div class="live-tag"><span></span>Indicative rates · Updated May 2025</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Stat Strip ─────────────────────────────────────────────── -->
+<div class="stat-strip no-print">
+  <div class="stat-strip-inner">
+    <div class="stat-item">
+      <div class="stat-lbl">Total Corpus</div>
+      <div class="stat-val" id="sTotalCorpus">₹50,00,000</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-lbl">Annuity Corpus</div>
+      <div class="stat-val" id="sAnnuityCorpus">₹20,00,000</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-lbl">Tax-Free Lump Sum</div>
+      <div class="stat-val" id="sLumpSum">₹30,00,000</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-lbl">Best Monthly Pension</div>
+      <div class="stat-val" id="sBestPension">₹10,867/mo</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Controls -->
+  <section class="sec">
+    <div class="sec-title">Configure Parameters</div>
+    <div class="ctrl-grid">
+
+      <div class="card ctrl-card full">
+        <div class="ctrl-lbl">Total NPS Corpus at Maturity</div>
+        <div class="corpus-amt" id="corpusAmt">₹50,00,000</div>
+        <div class="corpus-sub" id="corpusSub">Fifty Lakhs</div>
+        <input type="range" id="corpusSlider" min="0" max="1000" value="332" oninput="onSlider(this)"/>
+        <div class="slider-ticks">
+          <span>₹8 L</span><span>₹25 L</span><span>₹1 Cr</span><span>₹5 Cr</span><span>₹25 Cr</span><span>₹100 Cr</span>
+        </div>
+      </div>
+
+      <div class="card ctrl-card">
+        <div class="ctrl-lbl">Subscriber Type</div>
+        <div class="pill-group" id="subGrp">
+          <button class="pill active" data-val="govt" onclick="pickPill('subGrp',this);recalc()">
+            Government Subscriber
+            <span class="pill-sub">Min. 40% annuity · Regular exit</span>
+          </button>
+          <button class="pill" data-val="private" onclick="pickPill('subGrp',this);recalc()">
+            Private / NPS Lite
+            <span class="pill-sub">Min. 40% annuity · Regular exit</span>
+          </button>
+          <button class="pill" data-val="premature" onclick="pickPill('subGrp',this);recalc()">
+            Premature Exit (&lt;60)
+            <span class="pill-sub">Min. 80% annuity mandatory</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card ctrl-card">
+        <div class="ctrl-lbl">Annuity Plan Type</div>
+        <div class="pill-group" id="planGrp">
+          <button class="pill active" data-val="life" onclick="pickPill('planGrp',this);recalc()">
+            Life Annuity
+            <span class="pill-sub">Highest monthly payout</span>
+          </button>
+          <button class="pill" data-val="lifeRop" onclick="pickPill('planGrp',this);recalc()">
+            Life + Return of Purchase Price
+            <span class="pill-sub">Corpus returned to nominee</span>
+          </button>
+          <button class="pill" data-val="jointRop" onclick="pickPill('planGrp',this);recalc()">
+            Joint Life + ROP
+            <span class="pill-sub">Spouse income protection</span>
+          </button>
+          <button class="pill" data-val="escalation" onclick="pickPill('planGrp',this);recalc()">
+            Escalation 3% p.a.
+            <span class="pill-sub">Inflation-linked growth</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Analysis Row: Donut + Cards -->
+  <section class="sec">
+    <div class="sec-title">Corpus Allocation &amp; Summary</div>
+    <div class="analysis-row">
+
+      <!-- Donut Chart -->
+      <div class="card donut-card">
+        <div class="ctrl-lbl" style="margin-bottom:18px;">Allocation Breakdown</div>
+        <div class="donut-wrap">
+          <div class="donut-svg-wrap">
+            <svg class="donut-svg" viewBox="0 0 160 160">
+              <circle class="donut-track" cx="80" cy="80" r="60"/>
+              <circle class="donut-annuity" id="donutA" cx="80" cy="80" r="60" stroke-dasharray="150.8 226.2" stroke-dashoffset="0"/>
+              <circle class="donut-lump"    id="donutL" cx="80" cy="80" r="60" stroke-dasharray="226.2 150.8" stroke-dashoffset="-150.8"/>
+            </svg>
+            <div class="donut-center">
+              <span class="donut-center-pct" id="donutPct">40%</span>
+              <span class="donut-center-lbl">Annuity</span>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="legend-row">
+              <div class="legend-dot navy"></div>
+              <span class="legend-label">Annuity Corpus</span>
+              <span class="legend-val" id="ldAnnuity">₹20,00,000</span>
+              <span class="legend-pct" id="ldAnnuityPct">(40%)</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-dot grey"></div>
+              <span class="legend-label">Tax-Free Lump Sum</span>
+              <span class="legend-val" id="ldLump">₹30,00,000</span>
+              <span class="legend-pct" id="ldLumpPct">(60%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards 2×2 -->
+      <div class="cards-grid">
+        <div class="card sc">
+          <div class="sc-bg"></div>
+          <div class="sc-icon">💰</div>
+          <div class="sc-lbl">Annuity Corpus</div>
+          <div class="sc-val" id="scAnnuity">₹20,00,000</div>
+          <div class="sc-sub" id="scAnnuitySub">40% · Mandatory annuity purchase</div>
+        </div>
+        <div class="card sc accent2">
+          <div class="sc-bg"></div>
+          <div class="sc-icon grey">🏦</div>
+          <div class="sc-lbl">Tax-Free Lump Sum</div>
+          <div class="sc-val" id="scLump">₹30,00,000</div>
+          <div class="sc-sub" id="scLumpSub">60% · Exempt u/s 10(17A)</div>
+        </div>
+        <div class="card sc accent3">
+          <div class="sc-bg"></div>
+          <div class="sc-icon">📈</div>
+          <div class="sc-lbl">Best Monthly Pension</div>
+          <div class="sc-val highlight" id="scBestPension">₹10,867</div>
+          <div class="sc-sub" id="scBestSub">LIC · Life Annuity · 6.52% p.a.</div>
+        </div>
+        <div class="card sc accent4">
+          <div class="sc-bg"></div>
+          <div class="sc-icon">🗓️</div>
+          <div class="sc-lbl">Est. 20-Year Total Pension</div>
+          <div class="sc-val" id="scLifetime">₹26,08,080</div>
+          <div class="sc-sub">Assuming 20-yr post-retirement horizon</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Insights Strip -->
+  <div class="insights-strip">
+    <div class="insight">
+      <div class="insight-icon">⏱</div>
+      <div class="insight-body">
+        <div class="insight-lbl">Break-Even Period</div>
+        <div class="insight-val" id="insBreakeven">15.4 yrs</div>
+        <div class="insight-sub">Years to recover annuity corpus via pension</div>
+      </div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">📊</div>
+      <div class="insight-body">
+        <div class="insight-lbl">Annual Pension (Best ASP)</div>
+        <div class="insight-val" id="insAnnual">₹1,30,400</div>
+        <div class="insight-sub">Gross annual income from best-rate ASP</div>
+      </div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">💡</div>
+      <div class="insight-body">
+        <div class="insight-lbl">Effective Yield on Corpus</div>
+        <div class="insight-val" id="insYield">6.52%</div>
+        <div class="insight-sub">Rate applied on annuity corpus by top ASP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adequacy Gauge -->
+  <section class="sec">
+    <div class="sec-title">Monthly Pension Adequacy</div>
+    <div class="card gauge-card">
+      <div class="gauge-header">
+        <div>
+          <div class="gauge-title">How does the best pension compare to income benchmarks?</div>
+          <div style="font-size:.74rem;color:var(--text-muted);margin-top:3px;">Scale: ₹0 → ₹2,00,000 / month</div>
+        </div>
+        <div class="gauge-cur" id="gaugeCur">₹10,867 / month</div>
+      </div>
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gaugeFill" style="width:5.4%"></div>
+      </div>
+      <!-- Tick marks positioned via JS -->
+      <div style="position:relative;height:42px;" id="gaugeMarks"></div>
+      <div class="gauge-legend">
+        <div class="gl-item"><div class="gl-dot" style="background:var(--n700)"></div>Your best pension</div>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g300)"></div>Basic comfort (₹25k)</div>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g400)"></div>Standard (₹60k)</div>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g500)"></div>Premium (₹1.5L)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASP Table -->
+  <section class="sec">
+    <div class="sec-title">ASP Comparison — Ranked by Monthly Pension</div>
+    <div class="tbl-outer">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Annuity Service Provider</th>
+              <th>Rate (% p.a.)</th>
+              <th>Monthly Pension</th>
+              <th>Annual Pension</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="aspBody"></tbody>
+        </table>
+      </div>
+      <div class="tbl-foot">
+        <p><span>*</span> Indicative rates as of May 2025 for a 60-year-old male subscriber. Actual rates differ by age, gender, corpus size and product variant. Obtain a binding quote from the ASP before advising clients to place an order. PFRDA registration does not constitute a government guarantee on payouts.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="div"></div>
+
+  <!-- Plan Type Reference -->
+  <section class="sec">
+    <div class="sec-title">Annuity Plan Types — Feature Reference</div>
+    <div class="expl-outer">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan Type</th>
+              <th>Payout Level</th>
+              <th class="ctr">Corpus Returned on Death</th>
+              <th class="ctr">Spouse Covered</th>
+              <th class="ctr">Payout Escalates</th>
+              <th>Best Suited For</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="plan-nm">Life Annuity</span></td>
+              <td><span class="payout-badge high">Highest</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="best-use-lbl">Single subscriber; maximise monthly income</td>
+            </tr>
+            <tr>
+              <td><span class="plan-nm">Life + Return of Purchase Price</span></td>
+              <td><span class="payout-badge high">High</span></td>
+              <td class="ctr"><span class="chk">✓</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="best-use-lbl">Single subscriber; preserve wealth for heirs</td>
+            </tr>
+            <tr>
+              <td><span class="plan-nm">Joint Life + Return of Purchase Price</span></td>
+              <td><span class="payout-badge med">Medium</span></td>
+              <td class="ctr"><span class="chk">✓</span></td>
+              <td class="ctr"><span class="chk">✓</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="best-use-lbl">Married; spouse requires income protection</td>
+            </tr>
+            <tr>
+              <td><span class="plan-nm">Escalation 3% p.a.</span></td>
+              <td><span class="payout-badge low">Lower initially</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="ctr"><span class="crs">—</span></td>
+              <td class="ctr"><span class="chk">✓</span></td>
+              <td class="best-use-lbl">Long retirement horizon; inflation-sensitive clients</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="div"></div>
+
+  <!-- Disclaimer -->
+  <section class="sec">
+    <div class="disc">
+      <div class="disc-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Tax Treatment &amp; Regulatory Disclaimer
+      </div>
+      <p><strong>Lump Sum Withdrawal:</strong> At maturity (age 60), up to 60% of the accumulated NPS corpus withdrawn as a lump sum is <strong>fully tax-exempt</strong> under Section 10(17A) of the Income-tax Act, 1961. The remaining corpus (minimum 40%) must be compulsorily utilised to purchase an annuity from a PFRDA-empanelled ASP.</p>
+      <p><strong>Annuity Income:</strong> The monthly pension received is <strong>fully taxable</strong> as "Income from Other Sources" at the subscriber's applicable slab rate in the year of receipt. Senior citizens may claim a deduction of up to ₹50,000 p.a. on interest income u/s 80TTB; TDS provisions apply as per prevailing Income-tax rules.</p>
+      <p><strong>Premature Exit:</strong> For exit before 60 years of age, a minimum of 80% of the corpus must be invested in an annuity; only 20% may be withdrawn as a lump sum (taxable as income in the year of withdrawal). Death benefit rules follow the nomination instructions registered with the CRA.</p>
+      <p><strong>Disclaimer:</strong> This tool is for <em>illustrative and advisory purposes only</em> and does not constitute investment, legal, or tax advice. Annuity rates are indicative, change daily based on G-Sec yields, and are subject to each insurer's product filing with the IRDAI. Always obtain a live, binding quote from the relevant ASP before advising any client to place an annuity purchase order.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ── Data ─────────────────────────────────────────────── */
+const ASPs=[
+  {name:"LIC",          full:"Life Insurance Corporation of India",  r:{life:6.52,lifeRop:5.84,jointRop:5.55,escalation:5.18},note:"Govt. backed; highest life annuity rate"},
+  {name:"ICICI Pru",    full:"ICICI Prudential Life Insurance",      r:{life:6.38,lifeRop:5.72,jointRop:5.42,escalation:5.05},note:"Strong digital servicing; competitive"},
+  {name:"HDFC Life",    full:"HDFC Life Insurance Company",          r:{life:6.25,lifeRop:5.65,jointRop:5.35,escalation:4.98},note:"Consistent performer; large network"},
+  {name:"SBI Life",     full:"SBI Life Insurance Company",           r:{life:6.18,lifeRop:5.58,jointRop:5.28,escalation:4.92},note:"PSU-backed; widespread branch reach"},
+  {name:"PNB MetLife",  full:"PNB MetLife India Insurance Company",  r:{life:6.10,lifeRop:5.48,jointRop:5.18,escalation:4.85},note:"PSU bank partnership; reliable claims"},
+  {name:"Bajaj Allianz",full:"Bajaj Allianz Life Insurance Company", r:{life:6.02,lifeRop:5.40,jointRop:5.10,escalation:4.78},note:"Established private insurer; digital-first"},
+  {name:"Tata AIA",     full:"Tata AIA Life Insurance Company",      r:{life:5.95,lifeRop:5.32,jointRop:5.02,escalation:4.70},note:"Strong brand; growing annuity book"},
+];
+const SUB_PCT={govt:.4,private:.4,premature:.8};
+const PLAN_LBL={life:"Life Annuity",lifeRop:"Life + ROP",jointRop:"Joint Life + ROP",escalation:"Escalation 3% p.a."};
+const GAUGE_MAX=200000;
+const GAUGE_MARKS=[
+  {v:25000, lbl:"₹25k",  tag:"Basic"},
+  {v:60000, lbl:"₹60k",  tag:"Standard"},
+  {v:150000,lbl:"₹1.5L", tag:"Premium"},
+];
+
+/* ── Log slider ─────────────────────────────────────────── */
+const LN=Math.log10(800000), LX=Math.log10(1e9);
+const s2c=v=>Math.round(Math.pow(10,LN+(v/1000)*(LX-LN)));
+const c2s=c=>Math.round(((Math.log10(c)-LN)/(LX-LN))*1000);
+
+/* ── Format helpers ─────────────────────────────────────── */
+const f=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+function fShort(n){
+  if(n>=1e7)return"₹"+(n/1e7).toFixed(2)+" Cr";
+  if(n>=1e5)return"₹"+(n/1e5).toFixed(2)+" L";
+  return"₹"+n.toLocaleString("en-IN");
+}
+function fWords(n){
+  if(n>=1e7){const c=n/1e7;return(c===Math.floor(c)?c:c.toFixed(2))+" Crore";}
+  if(n>=1e5){const l=n/1e5;return(l===Math.floor(l)?l:l.toFixed(2))+" Lakh";}
+  return n.toLocaleString("en-IN");
+}
+
+/* ── State ──────────────────────────────────────────────── */
+let corpus=5000000, sub="govt", plan="life";
+
+/* ── Pill ───────────────────────────────────────────────── */
+function pickPill(gid,el){
+  document.querySelectorAll("#"+gid+" .pill").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  if(gid==="subGrp")sub=el.dataset.val;
+  if(gid==="planGrp")plan=el.dataset.val;
+}
+
+/* ── Slider ─────────────────────────────────────────────── */
+function onSlider(el){
+  corpus=s2c(+el.value);
+  const pct=(+el.value/10).toFixed(1)+"%";
+  el.style.setProperty("--pct",pct);
+  const a=document.getElementById("corpusAmt");
+  a.textContent=f(corpus);
+  a.classList.remove("pop");void a.offsetWidth;a.classList.add("pop");
+  document.getElementById("corpusSub").textContent=fWords(corpus);
+  recalc();
+}
+
+/* ── Flash helper ───────────────────────────────────────── */
+function flash(id,val){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=val;
+  el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");
+}
+
+/* ── Donut ──────────────────────────────────────────────── */
+function updateDonut(ap){
+  const r=60, C=2*Math.PI*r;
+  const ad=C*ap, ld=C*(1-ap);
+  const dA=document.getElementById("donutA");
+  const dL=document.getElementById("donutL");
+  dA.style.strokeDasharray=`${ad} ${C-ad}`;
+  dL.style.strokeDasharray=`${ld} ${C-ld}`;
+  dL.style.strokeDashoffset=`${-ad}`;
+  document.getElementById("donutPct").textContent=(ap*100).toFixed(0)+"%";
+}
+
+/* ── Gauge ──────────────────────────────────────────────── */
+function updateGauge(monthly){
+  const pct=Math.min(monthly/GAUGE_MAX*100,100);
+  document.getElementById("gaugeFill").style.width=pct.toFixed(2)+"%";
+  flash("gaugeCur",f(monthly)+" / month");
+
+  // Render tick marks
+  const container=document.getElementById("gaugeMarks");
+  container.innerHTML=GAUGE_MARKS.map(m=>{
+    const lp=(m.v/GAUGE_MAX*100).toFixed(2)+"%";
+    return`<div class="gauge-mark" style="left:${lp}">
+      <div class="gauge-mark-tick"></div>
+      <div class="gauge-mark-lbl">${m.lbl}</div>
+      <div class="gauge-mark-tag">${m.tag}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ── Main recalc ────────────────────────────────────────── */
+function recalc(){
+  const ap=SUB_PCT[sub];
+  const ac=corpus*ap, ls=corpus-ac;
+
+  // Stat strip
+  flash("sTotalCorpus",   f(corpus));
+  flash("sAnnuityCorpus", f(ac));
+  flash("sLumpSum",       f(ls));
+
+  // Donut
+  updateDonut(ap);
+  flash("ldAnnuity", f(ac));
+  document.getElementById("ldAnnuityPct").textContent="("+(ap*100).toFixed(0)+"%)";
+  flash("ldLump", f(ls));
+  document.getElementById("ldLumpPct").textContent="("+((1-ap)*100).toFixed(0)+"%)";
+
+  // Summary cards
+  flash("scAnnuity",f(ac));
+  document.getElementById("scAnnuitySub").textContent=(ap*100).toFixed(0)+"% · Mandatory annuity purchase";
+  flash("scLump",f(ls));
+  document.getElementById("scLumpSub").textContent=((1-ap)*100).toFixed(0)+"% · Exempt u/s 10(17A) of IT Act";
+
+  // Rank ASPs
+  const maxR=Math.max(...ASPs.map(a=>a.r[plan]));
+  const ranked=[...ASPs].map(a=>({
+    ...a,rate:a.r[plan],
+    mo:Math.round(ac*a.r[plan]/100/12),
+    yr:Math.round(ac*a.r[plan]/100)
+  })).sort((a,b)=>b.mo-a.mo);
+
+  const best=ranked[0];
+  flash("sBestPension",   f(best.mo)+"/mo");
+  flash("scBestPension",  f(best.mo));
+  document.getElementById("scBestSub").textContent=`${best.name} · ${PLAN_LBL[plan]} · ${best.rate.toFixed(2)}% p.a.`;
+
+  const lifetime=best.mo*12*20;
+  flash("scLifetime", f(lifetime));
+
+  // Insights
+  const breakeven=(best.yr>0)?(ac/best.yr).toFixed(1):"—";
+  flash("insBreakeven", breakeven+" yrs");
+  flash("insAnnual",    f(best.yr));
+  flash("insYield",     best.rate.toFixed(2)+"%");
+
+  // Gauge
+  updateGauge(best.mo);
+
+  // Table
+  const tbody=document.getElementById("aspBody");
+  tbody.innerHTML=ranked.map((a,i)=>{
+    const rk=i+1;
+    const bc=rk===1?"g1":rk===2?"g2":rk===3?"g3":"";
+    const bw=(a.rate/maxR*100).toFixed(1)+"%";
+    return`<tr class="${rk===1?"r1":""}">
+      <td><div class="rank-b ${bc}">${rk}</div></td>
+      <td>
+        <div class="asp-name">${a.name}${rk===1?'<span class="top-tag">TOP PICK</span>':""}</div>
+        <div class="asp-full">${a.full}</div>
+      </td>
+      <td>
+        <span class="rate-chip">${a.rate.toFixed(2)}%</span>
+        <div class="rate-bar-row"><div class="rate-bar" style="width:${bw}"></div></div>
+      </td>
+      <td><div class="pen-val">${f(a.mo)}</div></td>
+      <td><div class="pen-val" style="font-size:.88rem">${f(a.yr)}</div><div class="pen-sub">per annum</div></td>
+      <td><span class="note-chip">${a.note}</span></td>
+    </tr>`;
+  }).join("");
+
+  // Stagger row animations
+  tbody.querySelectorAll("tr").forEach((r,i)=>{
+    r.style.animation="none";void r.offsetWidth;
+    r.style.animation=`slideR .3s ${i*.05}s ease both`;
+  });
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+(function(){
+  const sl=document.getElementById("corpusSlider");
+  sl.value=c2s(corpus);
+  const pct=(+sl.value/10).toFixed(1)+"%";
+  sl.style.setProperty("--pct",pct);
+  recalc();
+})();
+</script>
+</body>
+</html>
