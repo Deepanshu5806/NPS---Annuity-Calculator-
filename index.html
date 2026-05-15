@@ -233,46 +233,6 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .gl-item{display:flex;align-items:center;gap:6px;font-size:.73rem;color:var(--text-mid);}
 .gl-dot{width:8px;height:8px;border-radius:2px;}
 
-/* ── Editable Benchmarks ── */
-.gauge-bench-row{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
-}
-.gauge-bench-lbl{
-  font-size:.67rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-  color:var(--text-muted);white-space:nowrap;flex-shrink:0;
-  display:flex;align-items:center;gap:5px;
-}
-.gauge-bench-inputs{display:flex;gap:10px;flex-wrap:wrap;}
-.gauge-bench-item{display:flex;flex-direction:column;gap:3px;}
-.gauge-bench-item label{font-size:.63rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-muted);}
-.gauge-bench-field{
-  display:flex;align-items:center;
-  border:1.5px solid var(--border);border-radius:var(--r-sm);
-  background:var(--white);overflow:hidden;transition:border-color .2s,box-shadow .2s;
-}
-.gauge-bench-field:focus-within{border-color:var(--n500);box-shadow:0 0 0 3px rgba(36,99,174,.1);}
-.gauge-bench-prefix{
-  font-size:.78rem;color:var(--text-muted);padding:5px 7px;
-  background:var(--g50);border-right:1px solid var(--border);
-  font-weight:600;user-select:none;
-}
-.gauge-bench-field input{
-  width:82px;padding:5px 7px;
-  border:none;background:transparent;
-  color:var(--text);font-size:.82rem;font-weight:600;
-  font-family:'Inter',sans-serif;outline:none;
-  -moz-appearance:textfield;
-}
-.gauge-bench-field input::-webkit-inner-spin-button,
-.gauge-bench-field input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
-.gauge-bench-reset{
-  font-size:.67rem;font-weight:600;color:var(--n500);
-  background:none;border:none;cursor:pointer;padding:2px 4px;
-  text-decoration:underline;text-underline-offset:2px;
-  font-family:'Inter',sans-serif;transition:color .2s;margin-left:4px;
-}
-.gauge-bench-reset:hover{color:var(--n700);}
 
 /* ── Insights Strip ── */
 .insights-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;animation:fadeUp .45s .25s ease both;}
@@ -637,7 +597,7 @@ td.ctr,th.ctr{text-align:center;}
               </div>
             </span>
           </div>
-          <div id="gaugeScale" style="font-size:.74rem;color:var(--text-muted);margin-top:3px;">Scale: ₹0 → ₹2,00,000 / month</div>
+          <div style="font-size:.74rem;color:var(--text-muted);margin-top:3px;">Scale: ₹0 → ₹2,00,000 / month</div>
         </div>
         <div class="gauge-cur" id="gaugeCur">₹10,867 / month</div>
       </div>
@@ -645,39 +605,9 @@ td.ctr,th.ctr{text-align:center;}
       <div style="position:relative;height:42px;" id="gaugeMarks"></div>
       <div class="gauge-legend">
         <div class="gl-item"><div class="gl-dot" style="background:var(--n700)"></div>Your best pension</div>
-        <div class="gl-item"><div class="gl-dot" style="background:var(--g300)"></div><span id="lgBasic">Basic comfort (₹25k)</span></div>
-        <div class="gl-item"><div class="gl-dot" style="background:var(--g400)"></div><span id="lgStd">Standard (₹60k)</span></div>
-        <div class="gl-item"><div class="gl-dot" style="background:var(--g500)"></div><span id="lgPrem">Premium (₹1.5L)</span></div>
-      </div>
-      <div class="gauge-bench-row">
-        <div class="gauge-bench-lbl">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Set Benchmarks
-        </div>
-        <div class="gauge-bench-inputs">
-          <div class="gauge-bench-item">
-            <label>Basic</label>
-            <div class="gauge-bench-field">
-              <span class="gauge-bench-prefix">₹</span>
-              <input type="number" id="benchBasic" value="25000" min="1000" max="500000" step="1000" oninput="onBenchmarkChange()">
-            </div>
-          </div>
-          <div class="gauge-bench-item">
-            <label>Standard</label>
-            <div class="gauge-bench-field">
-              <span class="gauge-bench-prefix">₹</span>
-              <input type="number" id="benchStd" value="60000" min="1000" max="500000" step="1000" oninput="onBenchmarkChange()">
-            </div>
-          </div>
-          <div class="gauge-bench-item">
-            <label>Premium</label>
-            <div class="gauge-bench-field">
-              <span class="gauge-bench-prefix">₹</span>
-              <input type="number" id="benchPrem" value="150000" min="1000" max="500000" step="1000" oninput="onBenchmarkChange()">
-            </div>
-          </div>
-        </div>
-        <button class="gauge-bench-reset" onclick="resetBenchmarks()">Reset to defaults</button>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g300)"></div>Basic comfort (₹25k)</div>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g400)"></div>Standard (₹60k)</div>
+        <div class="gl-item"><div class="gl-dot" style="background:var(--g500)"></div>Premium (₹1.5L)</div>
       </div>
     </div>
   </section>
@@ -745,9 +675,8 @@ const ASPs=[
 ];
 const SUB_PCT={govt:.4,private:.2,premature:.8};
 const PLAN_LBL={life:"Life Annuity",lifeRop:"Life + ROP",jointRop:"Joint Life + ROP",escalation:"Escalation 3% p.a."};
-let GAUGE_MAX=200000;
-let GAUGE_MARKS=[{v:25000,lbl:"₹25k",tag:"Basic"},{v:60000,lbl:"₹60k",tag:"Standard"},{v:150000,lbl:"₹1.5L",tag:"Premium"}];
-const GAUGE_MARKS_DEFAULT=[{v:25000,lbl:"₹25k",tag:"Basic"},{v:60000,lbl:"₹60k",tag:"Standard"},{v:150000,lbl:"₹1.5L",tag:"Premium"}];
+const GAUGE_MAX=200000;
+const GAUGE_MARKS=[{v:25000,lbl:"₹25k",tag:"Basic"},{v:60000,lbl:"₹60k",tag:"Standard"},{v:150000,lbl:"₹1.5L",tag:"Premium"}];
 
 /* ── Option descriptions ── */
 const SUB_INFO={
@@ -772,7 +701,7 @@ const f=n=>"₹"+Math.round(n).toLocaleString("en-IN");
 function fWords(n){if(n>=1e7){const c=n/1e7;return(c===Math.floor(c)?c:c.toFixed(2))+" Crore";}if(n>=1e5){const l=n/1e5;return(l===Math.floor(l)?l:l.toFixed(2))+" Lakh";}return n.toLocaleString("en-IN");}
 
 /* ── State ── */
-let corpus=5000000,sub="govt",plan="life",lastBestPension=0,age=60,gender="male";
+let corpus=5000000,sub="govt",plan="life",age=60,gender="male";
 
 /* ── Rate adjustment (calibrated from Protean portal: age 24 → LIC life 6.42% vs base 7.10% = 0.019%/yr) ── */
 const AGE_ADJ=0.019; // % per year of age relative to base (60 yrs)
@@ -886,7 +815,6 @@ function recalc(){
   flash("scLifetime",f(best.mo*12*20));
   flash("insBreakeven",(best.yr>0?(ac/best.yr).toFixed(1):"—")+" yrs");
   flash("insAnnual",f(best.yr));flash("insYield",best.rate.toFixed(2)+"%");
-  lastBestPension=best.mo;
   updateGauge(best.mo);
   const tbody=document.getElementById("aspBody");
   tbody.innerHTML=ranked.map((a,i)=>{
@@ -897,49 +825,6 @@ function recalc(){
   // Update table footer with current parameters
   const tn=document.getElementById("tblNote");
   if(tn)tn.innerHTML=`<span>*</span> Indicative rates as of May 2026 for a <strong>${age}-year-old ${gender}</strong> subscriber. Base rates calibrated from Protean CRA portal data; adjusted ±0.019% per year of age from 60, and ×0.95 for female. Obtain a binding live quote from the ASP via the NPS CRA portal before advising clients.`;
-}
-
-/* ── Short number format for benchmark labels ── */
-function fmtK(n){
-  if(n>=100000){const v=n/100000;return"₹"+(Number.isInteger(v)?v:v.toFixed(1))+"L";}
-  if(n>=1000){const v=n/1000;return"₹"+(Number.isInteger(v)?v:v.toFixed(1))+"k";}
-  return"₹"+n;
-}
-
-/* ── Benchmark change handler ── */
-function onBenchmarkChange(){
-  const b=Math.max(1000,parseInt(document.getElementById("benchBasic").value)||25000);
-  const s=Math.max(b+1000,parseInt(document.getElementById("benchStd").value)||60000);
-  const p=Math.max(s+1000,parseInt(document.getElementById("benchPrem").value)||150000);
-  GAUGE_MARKS=[
-    {v:b,lbl:fmtK(b),tag:"Basic"},
-    {v:s,lbl:fmtK(s),tag:"Standard"},
-    {v:p,lbl:fmtK(p),tag:"Premium"}
-  ];
-  // Expand scale if premium benchmark exceeds current max
-  GAUGE_MAX=Math.max(200000,Math.ceil(p*1.5/100000)*100000);
-  // Update legend text
-  const lgEl=document.getElementById("lgBasic");if(lgEl)lgEl.textContent="Basic ("+fmtK(b)+")";
-  const lsEl=document.getElementById("lgStd");if(lsEl)lsEl.textContent="Standard ("+fmtK(s)+")";
-  const lpEl=document.getElementById("lgPrem");if(lpEl)lpEl.textContent="Premium ("+fmtK(p)+")";
-  // Update scale label
-  const scEl=document.getElementById("gaugeScale");if(scEl)scEl.textContent="Scale: ₹0 → "+f(GAUGE_MAX)+" / month";
-  // Re-render gauge with last known pension
-  updateGauge(lastBestPension);
-}
-
-/* ── Reset benchmarks to defaults ── */
-function resetBenchmarks(){
-  document.getElementById("benchBasic").value=25000;
-  document.getElementById("benchStd").value=60000;
-  document.getElementById("benchPrem").value=150000;
-  GAUGE_MARKS=[...GAUGE_MARKS_DEFAULT];
-  GAUGE_MAX=200000;
-  const lgEl=document.getElementById("lgBasic");if(lgEl)lgEl.textContent="Basic comfort (₹25k)";
-  const lsEl=document.getElementById("lgStd");if(lsEl)lsEl.textContent="Standard (₹60k)";
-  const lpEl=document.getElementById("lgPrem");if(lpEl)lpEl.textContent="Premium (₹1.5L)";
-  const scEl=document.getElementById("gaugeScale");if(scEl)scEl.textContent="Scale: ₹0 → ₹2,00,000 / month";
-  updateGauge(lastBestPension);
 }
 
 /* ── Init ── */
