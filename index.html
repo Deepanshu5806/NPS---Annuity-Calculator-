@@ -170,6 +170,13 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .pill.active{background:var(--n800);border-color:var(--n800);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(15,45,84,.28);transform:translateY(-1px);}
 .pill-sub{font-size:.67rem;display:block;opacity:.65;margin-top:1px;}
 
+/* ── Age display ── */
+.age-display{font-size:2rem;font-weight:800;color:var(--n800);letter-spacing:-.6px;line-height:1;margin-bottom:3px;transition:all .2s;}
+.age-display em{font-style:normal;font-size:1rem;font-weight:600;color:var(--text-muted);letter-spacing:0;margin-left:2px;}
+.age-display.pop{animation:countPop .25s ease;}
+.age-note{font-size:.7rem;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:5px;}
+.age-note svg{flex-shrink:0;}
+
 /* ── Analysis Row ── */
 .analysis-row{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
 @media(max-width:860px){.analysis-row{grid-template-columns:1fr;}}
@@ -453,6 +460,52 @@ td.ctr,th.ctr{text-align:center;}
           <div class="opt-desc" id="planDesc"></div>
         </div>
 
+        <!-- Age at Exit -->
+        <div class="card ctrl-card">
+          <div class="ctrl-lbl">
+            Age at Exit / Retirement
+            <span class="tip-wrap">
+              <button class="tip-btn" onclick="toggleTip(this)" type="button">i</button>
+              <div class="tip-pop">
+                <div class="tip-hd">Age at Exit</div>
+                <div class="tip-body">The subscriber's age when they exit NPS and purchase the annuity. Older subscribers receive a <strong style="color:#fff">higher annuity rate</strong> because the insurer expects to pay for fewer years.</div>
+                <div class="tip-when"><b>Calibration:</b>Rates are anchored to actual Protean portal data (LIC, ₹1 Cr corpus). At age 24: 6.42%; adjustment ≈ +0.019% per additional year of age.</div>
+              </div>
+            </span>
+          </div>
+          <div class="age-display" id="ageDisplay">60 <em>yrs</em></div>
+          <div class="corpus-sub" id="ageNote" style="margin-bottom:16px;">Standard retirement age</div>
+          <input type="range" id="ageSlider" min="45" max="80" value="60" oninput="onAgeSlider(this)"/>
+          <div class="slider-ticks"><span>45</span><span>50</span><span>55</span><span>60</span><span>65</span><span>70</span><span>75</span><span>80</span></div>
+          <div class="age-note">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Rates adjust automatically with age
+          </div>
+        </div>
+
+        <!-- Gender -->
+        <div class="card ctrl-card">
+          <div class="ctrl-lbl">
+            Subscriber Gender
+            <span class="tip-wrap">
+              <button class="tip-btn" onclick="toggleTip(this)" type="button">i</button>
+              <div class="tip-pop">
+                <div class="tip-hd">Why Gender Matters</div>
+                <div class="tip-body">Female subscribers have a statistically longer life expectancy, so insurers pay out for more years. This results in a <strong style="color:#fff">~5% lower annuity rate</strong> compared to male subscribers of the same age and corpus.</div>
+                <div class="tip-when"><b>Source:</b>Standard actuarial practice (IRDAI / LIC mortality tables). The discount is applied uniformly across all ASPs and plan types in this tool.</div>
+              </div>
+            </span>
+          </div>
+          <div class="pill-group" id="genderGrp">
+            <button class="pill active" data-val="male" onclick="pickPill('genderGrp',this);recalc()">Male<span class="pill-sub">Base annuity rate</span></button>
+            <button class="pill" data-val="female" onclick="pickPill('genderGrp',this);recalc()">Female<span class="pill-sub">~5% lower rate · Longer life exp.</span></button>
+          </div>
+          <div class="age-note" style="margin-top:14px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Gender discount applied to all ASP rates
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -639,7 +692,7 @@ td.ctr,th.ctr{text-align:center;}
           <tbody id="aspBody"></tbody>
         </table>
       </div>
-      <div class="tbl-foot"><p><span>*</span> Indicative rates as of May 2026 for a 60-year-old male subscriber. Actual rates differ by age, gender, corpus size and product variant. Obtain a binding quote from the ASP before advising clients to place an order.</p></div>
+      <div class="tbl-foot"><p id="tblNote"><span>*</span> Indicative rates as of May 2026 for a 60-year-old male subscriber. Actual rates differ by age, gender, corpus size and product variant. Obtain a binding quote from the ASP via the NPS CRA portal before advising clients to place an order.</p></div>
     </div>
   </section>
 
@@ -719,7 +772,37 @@ const f=n=>"₹"+Math.round(n).toLocaleString("en-IN");
 function fWords(n){if(n>=1e7){const c=n/1e7;return(c===Math.floor(c)?c:c.toFixed(2))+" Crore";}if(n>=1e5){const l=n/1e5;return(l===Math.floor(l)?l:l.toFixed(2))+" Lakh";}return n.toLocaleString("en-IN");}
 
 /* ── State ── */
-let corpus=5000000,sub="govt",plan="life",lastBestPension=0;
+let corpus=5000000,sub="govt",plan="life",lastBestPension=0,age=60,gender="male";
+
+/* ── Rate adjustment (calibrated from Protean portal: age 24 → LIC life 6.42% vs base 7.10% = 0.019%/yr) ── */
+const AGE_ADJ=0.019; // % per year of age relative to base (60 yrs)
+function adjRate(base){
+  const r=base+(age-60)*AGE_ADJ;
+  return Math.max(1.0,gender==="female"?r*0.95:r);
+}
+
+/* ── Age label helper ── */
+function ageLabel(a){
+  if(a<55)return"Premature / early exit range";
+  if(a===58)return"VRS / early retirement";
+  if(a===60)return"Standard retirement age";
+  if(a===65)return"Extended NPS deferral";
+  if(a>=70)return"Super-deferred annuity";
+  return"";
+}
+
+/* ── Age slider ── */
+function onAgeSlider(el){
+  age=+el.value;
+  const pct=((age-45)/(80-45)*100).toFixed(1)+"%";
+  el.style.setProperty("--pct",pct);
+  const d=document.getElementById("ageDisplay");
+  d.innerHTML=age+" <em>yrs</em>";
+  d.classList.remove("pop");void d.offsetWidth;d.classList.add("pop");
+  const note=ageLabel(age);
+  const an=document.getElementById("ageNote");if(an)an.textContent=note||" ";
+  recalc();
+}
 
 /* ── Tooltip toggle ── */
 function toggleTip(btn){
@@ -749,6 +832,7 @@ function pickPill(gid,el){
   el.classList.add("active");
   if(gid==="subGrp"){sub=el.dataset.val;updateOptDesc('subDesc',SUB_INFO[sub]);}
   if(gid==="planGrp"){plan=el.dataset.val;updateOptDesc('planDesc',PLAN_INFO[plan]);}
+  if(gid==="genderGrp"){gender=el.dataset.val;}
 }
 
 /* ── Slider ── */
@@ -794,8 +878,8 @@ function recalc(){
   flash("ldLump",f(ls));document.getElementById("ldLumpPct").textContent="("+((1-ap)*100).toFixed(0)+"%)";
   flash("scAnnuity",f(ac));document.getElementById("scAnnuitySub").textContent=(ap*100).toFixed(0)+"% · Mandatory annuity purchase";
   flash("scLump",f(ls));document.getElementById("scLumpSub").textContent=((1-ap)*100).toFixed(0)+"% · Exempt u/s 10(17A) of IT Act";
-  const maxR=Math.max(...ASPs.map(a=>a.r[plan]));
-  const ranked=[...ASPs].map(a=>({...a,rate:a.r[plan],mo:Math.round(ac*a.r[plan]/100/12),yr:Math.round(ac*a.r[plan]/100)})).sort((a,b)=>b.mo-a.mo);
+  const maxR=Math.max(...ASPs.map(a=>adjRate(a.r[plan])));
+  const ranked=[...ASPs].map(a=>{const r=adjRate(a.r[plan]);return{...a,rate:r,mo:Math.round(ac*r/100/12),yr:Math.round(ac*r/100)};}).sort((a,b)=>b.mo-a.mo);
   const best=ranked[0];
   flash("sBestPension",f(best.mo)+"/mo");flash("scBestPension",f(best.mo));
   document.getElementById("scBestSub").textContent=`${best.name} · ${PLAN_LBL[plan]} · ${best.rate.toFixed(2)}% p.a.`;
@@ -810,6 +894,9 @@ function recalc(){
     return`<tr class="${rk===1?"r1":""}"><td><div class="rank-b ${bc}">${rk}</div></td><td><div class="asp-name">${a.name}${rk===1?'<span class="top-tag">TOP PICK</span>':""}</div><div class="asp-full">${a.full}</div></td><td><span class="rate-chip">${a.rate.toFixed(2)}%</span><div class="rate-bar-row"><div class="rate-bar" style="width:${bw}"></div></div></td><td><div class="pen-val">${f(a.mo)}</div></td><td><div class="pen-val" style="font-size:.88rem">${f(a.yr)}</div><div class="pen-sub">per annum</div></td><td><span class="note-chip">${a.note}</span></td></tr>`;
   }).join("");
   tbody.querySelectorAll("tr").forEach((r,i)=>{r.style.animation="none";void r.offsetWidth;r.style.animation=`slideR .3s ${i*.05}s ease both`;});
+  // Update table footer with current parameters
+  const tn=document.getElementById("tblNote");
+  if(tn)tn.innerHTML=`<span>*</span> Indicative rates as of May 2026 for a <strong>${age}-year-old ${gender}</strong> subscriber. Base rates calibrated from Protean CRA portal data; adjusted ±0.019% per year of age from 60, and ×0.95 for female. Obtain a binding live quote from the ASP via the NPS CRA portal before advising clients.`;
 }
 
 /* ── Short number format for benchmark labels ── */
@@ -860,6 +947,10 @@ function resetBenchmarks(){
   const sl=document.getElementById("corpusSlider");
   sl.value=c2s(corpus);
   sl.style.setProperty("--pct",(+sl.value/10).toFixed(1)+"%");
+  // Init age slider fill
+  const ageSl=document.getElementById("ageSlider");
+  if(ageSl)ageSl.style.setProperty("--pct",((age-45)/(80-45)*100).toFixed(1)+"%");
+  const an=document.getElementById("ageNote");if(an)an.textContent=ageLabel(age)||" ";
   updateOptDesc('subDesc',SUB_INFO[sub]);
   updateOptDesc('planDesc',PLAN_INFO[plan]);
   recalc();
